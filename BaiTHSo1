@@ -1,0 +1,95 @@
+using System;
+using System.Collections.Generic;
+using System.ComponentModel;
+using System.Data;
+using System.Drawing;
+using System.Linq;
+using System.Text;
+using System.Windows.Forms;
+using System.Threading;
+//dùng lệnh với Serial.Port
+using System.IO;
+using System.IO.Ports;
+using System.Xml;
+using System.Data.SqlClient;//thư viện hỗ trợ kết nối SQL
+namespace DoLuong
+{
+    public partial class Form1 : Form
+    {
+        // Khai bao bien toan cuc
+        int rowIndex = 0;
+       //=========================
+        public Form1()
+        {
+            InitializeComponent();
+       }
+        //===============
+        SqlConnection con = new SqlConnection(@"Data Source=(local);Initial Catalog=NVAn_CNTDH_K14A;Integrated Security=True");//Chuỗi kết nối CSDL
+        SqlDataAdapter da;
+        DataTable dt;
+        //======================================
+        //Tạo hàm kết nối CSDL
+        private void KetNoiCSDL()
+        {
+            //Tạo chuỗi kết nối
+            string sql = "select * from ValueTemp";//lấy dữ liệu từ table ValueTemp
+            SqlCommand com = new SqlCommand(sql, con);//truy vấn cơ sở dữ liệu
+            com.CommandType = CommandType.Text;
+            da = new SqlDataAdapter(com);//Tải dữ liệu về
+            dt = new DataTable();//Tạo không gian ảo lưu trữ dữ liệu
+            da.Fill(dt);//Lưu dữ liệu vào không gian lưu trữ
+            con.Close();//Đóng kết nối
+            dataGridView1.DataSource = dt;//Gán dữ liệu vào DatagridView
+            dataGridView1.FirstDisplayedScrollingRowIndex = dataGridView1.RowCount - 1;//autoscroll datagridview to end point
+        }
+        //==============
+       
+        private void loadDATA()
+        {
+            if (dataGridView1.Rows.Count - 1 > 0)
+            {
+                rowIndex = dataGridView1.CurrentCell.RowIndex;//chọn hàng được click
+                getID.Text = dataGridView1["ID", rowIndex].Value.ToString();
+                getTEMP.Text = dataGridView1["Value", rowIndex].Value.ToString();
+                getDATETIME.Text = dataGridView1["TimeCreat", rowIndex].Value.ToString();
+            }
+            else
+            {
+                getID.Text = string.Empty;
+                getTEMP.Text = string.Empty;
+                getDATETIME.Text = string.Empty;
+            }
+        }
+        //==============
+        private void BTViewData_Click(object sender, EventArgs e)
+        {
+            con.Open();
+            KetNoiCSDL();
+            loadDATA();
+            con.Close();
+            dataGridView1.Enabled = true;
+        }
+        private void dataGridView1_SelectionChanged(object sender, EventArgs e)
+        {
+            try
+            {
+                dataGridView1.CurrentRow.Selected = true;//Chọn cả hàng dữ liệu
+            }
+            catch{}
+        }
+        private void dataGridView1_Click(object sender, EventArgs e)
+        {
+            getID.Enabled = true;
+            getTEMP.Enabled = true;
+            getDATETIME.Enabled = true;
+            dataGridView1.Enabled = true; 
+            if (dataGridView1.Rows.Count - 1 > 0)
+            {
+                rowIndex = dataGridView1.CurrentCell.RowIndex;//chọn hàng được click
+                getID.Text = dataGridView1["ID", rowIndex].Value.ToString();
+                getTEMP.Text = dataGridView1["Value", rowIndex].Value.ToString();
+                getDATETIME.Text = dataGridView1["TimeCreat", rowIndex].Value.ToString();
+            }
+        }
+    }
+}

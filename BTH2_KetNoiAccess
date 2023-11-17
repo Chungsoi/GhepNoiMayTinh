@@ -1,0 +1,19 @@
+using System.Data.OleDb;
+
+// Tạo hàm kết nối CSDL Access
+OleDbConnection con = new OleDbConnection(@"Provider= Microsoft.Jet.OLEDB.4.0;Data Source=C:\\Users\\Administrator\\Desktop\\NVAn_CNTDH_K14A.mdb");
+        private void KetNoiCSDL()
+        {
+          //Kiểm tra và mở kết nối
+ if (con.State != ConnectionState.Open)//nếu kết nối đang đóng thì mở kết nối
+            { con.Open(); }
+            string access = "select * from Parameter";//lấy dữ liệu từ table Prameter
+            OleDbCommand com = new OleDbCommand(access, con);//truy vấn cơ sở dữ liệu
+            com.CommandType = CommandType.Text;
+            OleDbDataAdapter da = new OleDbDataAdapter(com);//Tải dữ liệu về
+            DataTable dt = new DataTable();//Tạo không gian ảo lưu trữ dữ liệu
+            da.Fill(dt);//Lưu dữ liệu vào không gian lưu trữ
+            con.Close();//Đóng kết nối
+            //Gán dữ liệu vào DatagridView
+            dataGridView1.DataSource = dt;
+        }

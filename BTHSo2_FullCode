@@ -1,0 +1,187 @@
+using System;
+using System.Collections.Generic;
+using System.ComponentModel;
+using System.Data;
+using System.Drawing;
+using System.Linq;
+using System.Text;
+using System.Windows.Forms;
+using System.Data.OleDb;
+
+namespace access
+{
+    public partial class Form1 : Form
+    {
+        public Form1()
+        {
+            InitializeComponent();
+        }
+        //=============Tạo chuỗi kết nối=======================
+        int rowIndex = 0;
+        // Tạo chuỗi kết nối CSDL Access
+        OleDbConnection con = new OleDbConnection(@"Provider= Microsoft.Jet.OLEDB.4.0;Data Source= Provider=Microsoft.Jet.OLEDB.4.0;Data Source=D:\\Dropbox\\Thuc hanh Do luong va dieu khien bang may tinh\\code thuc hanh\\Bai2 Access 2010\\NVAn_CNTDH_K14A.mdb");
+        private void BTViewData_Click(object sender, EventArgs e)
+        {
+            KetNoiCSDL();
+        }
+
+        private void BTUpdate_Click(object sender, EventArgs e)
+        {
+            //=========================Update data vào CSDL===================
+            OleDbCommand cmd;
+            try
+            {
+                cmd = new OleDbCommand("Update Parameter Set " + "ValueText = " + "'" + getPARAMETER.Text + "'" + "," + "valueNumber = " + Convert.ToDouble(getVALUE.Text) + "," + "TimeCreat = " + "'" + getDATETIME.Text + "'" + " Where ID= " + Convert.ToInt16(getID.Text), con);
+                //nếu dữ liệu dạng text thì có dạng dữ liệu như: "'" + getPARAMETER.Text + "'"
+                con.Open();
+                cmd.ExecuteNonQuery();
+                //Load dữ liệu mới thêm lên datagridView
+                for (int countRow = 0; countRow < dataGridView1.Rows.Count; countRow++)
+                {
+                    if (Convert.ToInt16(dataGridView1[0, countRow].Value) == Convert.ToInt16(getID.Text))
+                    {
+                        dataGridView1[1, countRow].Value = getPARAMETER.Text;
+                        dataGridView1[2, countRow].Value = getVALUE.Text;
+                        dataGridView1[3, countRow].Value = getDATETIME.Text;
+                        this.BindingContext[this.dataGridView1.DataSource].EndCurrentEdit();//Kết thúc edit dữ liệu trên datagrid
+                    }
+                }
+                MessageBox.Show("Update Success", "OK", MessageBoxButtons.OK, MessageBoxIcon.None);
+                getID.Enabled = false;
+                getPARAMETER.Enabled = false;
+                getVALUE.Enabled = false;
+                getDATETIME.Enabled = false;
+            }
+            catch
+            {
+                MessageBox.Show("Update Fail ", "Lỗi", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                con.Close();
+                //return;
+            }
+           // KetNoiCSDL();
+        }
+
+        private void BTRepair_Click(object sender, EventArgs e)
+        {
+            getID.Enabled = true;
+            getPARAMETER.Enabled = true;
+            getVALUE.Enabled = true;
+            getDATETIME.Enabled = true;
+            
+        }
+
+        private void BTInsert_Click(object sender, EventArgs e)
+        {
+            OleDbCommand cmd;
+            try
+            {
+                cmd = new OleDbCommand("INSERT INTO Parameter (ID, ValueText, valueNumber,TimeCreat) VALUES (" + Convert.ToInt16(getID.Text) + " , '" + getPARAMETER.Text + "' , " + Convert.ToDouble(getVALUE.Text) + " , '" + getDATETIME.Text + "')", con);
+                con.Open();
+                cmd.ExecuteNonQuery();
+                
+            }
+            catch
+            {
+                MessageBox.Show("Fail value", "Lỗi", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                con.Close();
+                return;
+            }
+            KetNoiCSDL();
+        }
+
+        private void BTDel_Click(object sender, EventArgs e)
+        {
+            OleDbCommand cmd;
+            try
+            {
+                if (getID.Text != string.Empty) cmd = new OleDbCommand("DELETE FROM Parameter Where ID= " + Convert.ToInt16(getID.Text), con);
+                else
+                {
+                    rowIndex = dataGridView1.CurrentCell.RowIndex;//chọn hàng được click
+                    cmd = new OleDbCommand("DELETE FROM Parameter Where ID= " + rowIndex, con);
+                }
+                con.Open();
+                cmd.ExecuteNonQuery();
+                con.Close();
+            }
+            catch
+            {
+                con.Close();
+                MessageBox.Show("Lỗi", "Lỗi", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return;
+            }
+            KetNoiCSDL();
+            // xoá dữ liệu text trong ô nhập dữ liệu
+                getID.Text = string.Empty;
+                getPARAMETER.Text = string.Empty;
+                getVALUE.Text = string.Empty;
+                getDATETIME.Text = string.Empty;
+
+        }
+
+        private void BTDelAll_Click(object sender, EventArgs e)
+        {
+            OleDbCommand cmd;
+            try
+            {
+                cmd = new OleDbCommand("DELETE FROM Parameter", con); // xoá sạch hết dữ liệu Table
+                con.Open();
+                cmd.ExecuteNonQuery();
+                con.Close();
+            }
+            catch
+            {
+                con.Close();
+                MessageBox.Show("Lỗi", "Lỗi", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return;
+            }
+            KetNoiCSDL();
+            //==========Xoá hết text trong ô nhập dữ liệu
+            getID.Text = string.Empty;
+            getPARAMETER.Text = string.Empty;
+            getVALUE.Text = string.Empty;
+            getDATETIME.Text = string.Empty;
+
+        }
+
+        private void Form1_Load(object sender, EventArgs e)
+        {
+            KetNoiCSDL();
+            timer1.Start();
+        }
+
+         private void KetNoiCSDL()
+        {
+            //Kiểm tra và mở kết nối
+            if (con.State != ConnectionState.Open)//nếu kết nối đang đóng thì mở kết nối
+            { con.Open(); }
+            string access = "select * from Parameter";//lấy dữ liệu từ table Prameter
+            OleDbCommand com = new OleDbCommand(access, con);//truy vấn cơ sở dữ liệu
+            com.CommandType = CommandType.Text;
+            DataTable dt = new DataTable();//Tạo không gian ảo lưu trữ dữ liệu
+            OleDbDataAdapter da = new OleDbDataAdapter(com);//Tải dữ liệu về
+            da.Fill(dt);//Lưu dữ liệu vào không gian lưu trữ
+            con.Close();//Đóng kết nối
+            //Gán dữ liệu vào DatagridView
+            dataGridView1.DataSource = dt;
+
+        }
+
+        private void dataGridView1_Click(object sender, EventArgs e)
+        {
+            if (dataGridView1.Rows.Count - 1 > 0)
+            {
+                rowIndex = dataGridView1.CurrentCell.RowIndex;//chọn hàng được click
+                getID.Text = dataGridView1["iDDataGridViewTextBoxColumn", rowIndex].Value.ToString();
+                getPARAMETER.Text = dataGridView1["valueTextDataGridViewTextBoxColumn", rowIndex].Value.ToString();
+                getVALUE.Text = dataGridView1["valueNumberDataGridViewTextBoxColumn", rowIndex].Value.ToString();
+                getDATETIME.Text = dataGridView1["timeCreatDataGridViewTextBoxColumn", rowIndex].Value.ToString();
+            }
+        }
+
+        private void timer1_Tick(object sender, EventArgs e)
+        {
+            getRealTime.Text = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.fff");
+        }
+    }
+}
